@@ -16,14 +16,17 @@ static NSString * UIKitLocalizedString(NSString *string)
 static NSArray * EditableTextInputsInView(UIView *view)
 {
 	NSMutableArray *textInputs = [NSMutableArray new];
-	for (UIView *subview in view.subviews)
-	{
-		BOOL isTextField = [subview isKindOfClass:[UITextField class]];
-		BOOL isEditableTextView = [subview isKindOfClass:[UITextView class]] && [(UITextView *)subview isEditable];
-		if (isTextField || isEditableTextView)
-			[textInputs addObject:subview];
-		else
-			[textInputs addObjectsFromArray:EditableTextInputsInView(subview)];
+    for (UIView *subview in view.subviews) {
+		if (([subview isKindOfClass:[UITextField class]] && [(UITextField *)subview isEnabled]) || ([subview isKindOfClass:[UITextView class]] && [(UITextView *)subview isEditable])) {
+    		if (textInputs == nil) textInputs = [NSMutableArray new];
+            [textInputs addObject:subview];
+		} else if (subview.subviews.count > 0) {
+            NSArray *subTextInputs = EditableTextInputsInView(subview);
+            if (subTextInputs.count > 0) {
+                if (textInputs == nil) textInputs = [NSMutableArray new];
+                [textInputs addObjectsFromArray:subTextInputs];
+            }
+        }
 	}
 	return textInputs;
 }

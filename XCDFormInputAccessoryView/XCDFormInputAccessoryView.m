@@ -31,10 +31,13 @@ static NSArray * EditableTextInputsInView(UIView *view)
 	return textInputs;
 }
 
+@interface XCDFormInputAccessoryView ()
+
+@property (nonatomic, strong, readwrite) UIToolbar *toolbar;
+
+@end
+
 @implementation XCDFormInputAccessoryView
-{
-	UIToolbar *_toolbar;
-}
 
 - (id) initWithFrame:(CGRect)frame
 {
@@ -46,25 +49,26 @@ static NSArray * EditableTextInputsInView(UIView *view)
 	if (!(self = [super initWithFrame:CGRectZero]))
 		return nil;
 	
-	_responders = responders;
+	self.responders = responders;
 	
-	_toolbar = [[UIToolbar alloc] init];
-	_toolbar.tintColor = nil;
-	_toolbar.barStyle = UIBarStyleBlack;
-	_toolbar.translucent = YES;
-	_toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+	UIToolbar *toolbar = [[UIToolbar alloc] init];
+	toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 	UISegmentedControl *segmentedControl = [[UISegmentedControl alloc] initWithItems:@[ UIKitLocalizedString(@"Previous"), UIKitLocalizedString(@"Next") ]];
 	[segmentedControl addTarget:self action:@selector(selectAdjacentResponder:) forControlEvents:UIControlEventValueChanged];
 	segmentedControl.segmentedControlStyle = UISegmentedControlStyleBar;
 	segmentedControl.momentary = YES;
 	UIBarButtonItem *segmentedControlBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:segmentedControl];
 	UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-	_toolbar.items = @[ segmentedControlBarButtonItem, flexibleSpace ];
+	toolbar.items = @[ segmentedControlBarButtonItem, flexibleSpace ];
+    self.toolbar = toolbar;
+	[self addSubview:toolbar];
+    
+    self.barStyle = UIBarStyleDefault;
+    self.barTranslucent = YES;
+    
 	self.hasDoneButton = [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone;
-	
-	[self addSubview:_toolbar];
-	
-	self.frame = _toolbar.frame = (CGRect){CGPointZero, [_toolbar sizeThatFits:CGSizeZero]};
+    
+	self.frame = toolbar.frame = (CGRect){CGPointZero, [toolbar sizeThatFits:CGSizeZero]};
 	
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(textInputDidBeginEditing:) name:UITextFieldTextDidBeginEditingNotification object:nil];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(textInputDidBeginEditing:) name:UITextViewTextDidBeginEditingNotification object:nil];
@@ -77,15 +81,36 @@ static NSArray * EditableTextInputsInView(UIView *view)
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+-(void)setBarStyle:(UIBarStyle)barStyle
+{
+    self.toolbar.barStyle = barStyle;
+}
+
+-(UIBarStyle)barStyle
+{
+    return self.toolbar.barStyle;
+}
+
+-(void)setBarTranslucent:(BOOL)barTranslucent
+{
+    self.toolbar.translucent = barTranslucent;
+}
+
+-(BOOL)barTranslucent
+{
+    return self.toolbar.translucent;
+}
+
 - (void) updateSegmentedControl
 {
 	NSArray *responders = self.responders;
 	if ([responders count] == 0)
 		return;
 	
-	UISegmentedControl *segmentedControl = (UISegmentedControl *)[_toolbar.items[0] customView];
-	BOOL isFirst = [[responders objectAtIndex:0] isFirstResponder];
-	BOOL isLast = [[responders lastObject] isFirstResponder];
+	UISegmentedControl *segmentedControl = (UISegmentedControl *)[self.toolbar.items.firstObject customView];
+	BOOL isFirst = [responders.firstObject isFirstResponder];
+	BOOL isLast = [responders.lastObject isFirstResponder];
+
 	[segmentedControl setEnabled:!isFirst forSegmentAtIndex:0];
 	[segmentedControl setEnabled:!isLast forSegmentAtIndex:1];
 }
@@ -134,13 +159,16 @@ static NSArray * EditableTextInputsInView(UIView *view)
 	_hasDoneButton = hasDoneButton;
 	[self didChangeValueForKey:@"hasDoneButton"];
 	
-	NSArray *items;
-	if (hasDoneButton)
-		items = [_toolbar.items arrayByAddingObject:[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)]];
-	else
-		items = [_toolbar.items subarrayWithRange:NSMakeRange(0, 2)];
+    UIToolbar *toolbar = self.toolbar;
+    
+	NSArray *items = nil;
+	if (hasDoneButton) {
+		items = [toolbar.items arrayByAddingObject:[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)]];
+	} else {
+		items = [toolbar.items subarrayWithRange:NSMakeRange(0, 2)];
+    }
 	
-	[_toolbar setItems:items animated:animated];
+	[toolbar setItems:items animated:animated];
 }
 
 #pragma mark - Actions

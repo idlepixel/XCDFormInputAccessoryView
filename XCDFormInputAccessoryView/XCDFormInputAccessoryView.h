@@ -9,9 +9,13 @@
 
 @interface XCDFormInputAccessoryView : UIView
 
+@property (assign) UIBarStyle barStyle NS_AVAILABLE_IOS(5_0) UI_APPEARANCE_SELECTOR;
+@property (assign) BOOL barTranslucent NS_AVAILABLE_IOS(5_0) UI_APPEARANCE_SELECTOR;
+
 - (id) initWithResponders:(NSArray *)responders; // Objects must be UIResponder instances
 
 @property (nonatomic, strong) NSArray *responders;
+@property (nonatomic, strong, readonly) UIToolbar *toolbar;
 
 @property (nonatomic, assign) BOOL hasDoneButton; // Defaults to YES on iPhone, NO on iPad
 

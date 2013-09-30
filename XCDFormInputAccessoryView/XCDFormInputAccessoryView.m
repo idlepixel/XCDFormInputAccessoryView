@@ -147,18 +147,21 @@ static NSArray * EditableTextInputsInView(UIView *view)
 
 - (void) selectAdjacentResponder:(UISegmentedControl *)sender
 {
-	NSArray *firstResponders = [self.responders filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(UIResponder *responder, NSDictionary *bindings) {
+    NSArray *responders = self.responders;
+	NSArray *firstResponders = [responders filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(UIResponder *responder, NSDictionary *bindings) {
 		return [responder isFirstResponder];
 	}]];
-	UIResponder *firstResponder = [firstResponders lastObject];
-	NSInteger offset = sender.selectedSegmentIndex == 0 ? -1 : +1;
-	NSInteger firstResponderIndex = [self.responders indexOfObject:firstResponder];
-	NSInteger adjacentResponderIndex = firstResponderIndex != NSNotFound ? firstResponderIndex + offset : NSNotFound;
-	UIResponder *adjacentResponder = nil;
-	if (adjacentResponderIndex >= 0 && adjacentResponderIndex < (NSInteger)[self.responders count])
-		adjacentResponder = [self.responders objectAtIndex:adjacentResponderIndex];
-	
-	[adjacentResponder becomeFirstResponder];
+    UIResponder *firstResponder = [firstResponders lastObject];
+    NSInteger offset = sender.selectedSegmentIndex == 0 ? -1 : +1;
+    NSInteger firstResponderIndex = [responders indexOfObject:firstResponder];
+    NSInteger adjacentResponderIndex = firstResponderIndex != NSNotFound ? firstResponderIndex + offset : NSNotFound;
+    UIResponder *adjacentResponder = nil;
+	if (adjacentResponderIndex >= 0 && adjacentResponderIndex < (NSInteger)[responders count]) {
+		adjacentResponder = [responders objectAtIndex:adjacentResponderIndex];
+    }
+    if (adjacentResponder) {
+        [adjacentResponder becomeFirstResponder];
+    }
 }
 
 - (void) done

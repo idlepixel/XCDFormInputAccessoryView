@@ -34,6 +34,9 @@ static NSArray * EditableTextInputsInView(UIView *view)
 @interface XCDFormInputAccessoryView ()
 
 @property (nonatomic, strong, readwrite) UIToolbar *toolbar;
+@property (nonatomic, strong, readwrite) UIBarButtonItem *backNextBarButtonItem;
+@property (nonatomic, strong, readwrite) UIBarButtonItem *doneBarButtonItem;
+@property (nonatomic, strong, readwrite) UIBarButtonItem *flexibleSpaceBarButtonItem;
 
 @end
 
@@ -57,16 +60,19 @@ static NSArray * EditableTextInputsInView(UIView *view)
 	[segmentedControl addTarget:self action:@selector(selectAdjacentResponder:) forControlEvents:UIControlEventValueChanged];
 	segmentedControl.segmentedControlStyle = UISegmentedControlStyleBar;
 	segmentedControl.momentary = YES;
-	UIBarButtonItem *segmentedControlBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:segmentedControl];
-	UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
-	toolbar.items = @[ segmentedControlBarButtonItem, flexibleSpace ];
+	self.backNextBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:segmentedControl];
+	self.flexibleSpaceBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+    self.doneBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)];
+    
     self.toolbar = toolbar;
 	[self addSubview:toolbar];
     
     self.barStyle = UIBarStyleDefault;
     self.barTranslucent = YES;
     
-	self.hasDoneButton = [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone;
+	_hasDoneButton = [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone;
+    _hasBackNextButtons = YES;
+    [self refreshToolbar:NO];
     
 	self.frame = toolbar.frame = (CGRect){CGPointZero, [toolbar sizeThatFits:CGSizeZero]};
 	
@@ -159,13 +165,42 @@ static NSArray * EditableTextInputsInView(UIView *view)
 	_hasDoneButton = hasDoneButton;
 	[self didChangeValueForKey:@"hasDoneButton"];
 	
+    [self refreshToolbar:animated];
+}
+
+- (void) setHasBackNextButtons:(BOOL)hasBackNextButtons
+{
+	[self setHasBackNextButtons:hasBackNextButtons animated:NO];
+}
+
+- (void) setHasBackNextButtons:(BOOL)hasBackNextButtons animated:(BOOL)animated
+{
+	if (_hasBackNextButtons == hasBackNextButtons)
+		return;
+	
+	[self willChangeValueForKey:@"hasBackNextButtons"];
+	_hasBackNextButtons = hasBackNextButtons;
+	[self didChangeValueForKey:@"hasBackNextButtons"];
+	
+    [self refreshToolbar:animated];
+}
+
+-(void)refreshToolbar:(BOOL)animated
+{
     UIToolbar *toolbar = self.toolbar;
     
 	NSArray *items = nil;
-	if (hasDoneButton) {
-		items = [toolbar.items arrayByAddingObject:[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(done)]];
-	} else {
-		items = [toolbar.items subarrayWithRange:NSMakeRange(0, 2)];
+    
+    if (self.hasBackNextButtons) {
+        items = @[self.backNextBarButtonItem];
+    } else {
+        items = @[];
+    }
+    
+    items = [items arrayByAddingObject:self.flexibleSpaceBarButtonItem];
+    
+	if (self.hasDoneButton) {
+		items = [items arrayByAddingObject:self.doneBarButtonItem];
     }
 	
 	[toolbar setItems:items animated:animated];

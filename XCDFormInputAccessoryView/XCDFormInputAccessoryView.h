@@ -17,8 +17,10 @@
 @property (nonatomic, strong) NSArray *responders;
 @property (nonatomic, strong, readonly) UIToolbar *toolbar;
 
+@property (nonatomic, assign) BOOL hasBackNextButtons; // Defaults to YES
 @property (nonatomic, assign) BOOL hasDoneButton; // Defaults to YES on iPhone, NO on iPad
 
+- (void) setHasBackNextButtons:(BOOL)hasBackNextButtons animated:(BOOL)animated;
 - (void) setHasDoneButton:(BOOL)hasDoneButton animated:(BOOL)animated;
 
 @end
